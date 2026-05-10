@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fake MRR Dashboard</title>
+  <meta name="description" content="Create and present a fullscreen SaaS analytics dashboard with editable KPI and chart inputs." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Fake MRR Dashboard" />
+  <meta property="og:description" content="Create and present a fullscreen SaaS analytics dashboard with editable KPI and chart inputs." />
+  <meta property="og:image" content="./og-image.svg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Fake MRR Dashboard" />
+  <meta name="twitter:description" content="Create and present a fullscreen SaaS analytics dashboard with editable KPI and chart inputs." />
+  <meta name="twitter:image" content="./og-image.svg" />
+  <style>
+    :root {
+      --bg: #060d1a;
+      --panel: #0a1324;
+      --card: #101b2d;
+      --line: #22344f;
+      --text: #cdd8e8;
+      --muted: #86a0bc;
+      --accent: #59dd8f;
+      --accent-2: #78f3ae;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -20%, #10233f 0%, #060d1a 60%), var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .controls {
+      background: linear-gradient(180deg, #0f1a2e, #0a1324);
+      border: 1px solid #1b2c45;
+      border-radius: 16px;
+      padding: 16px;
+      overflow: auto;
+      max-height: calc(100vh - 32px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .group {
+      margin-bottom: 14px;
+    }
+
+    .group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #9cb0c9;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      background: #0b1528;
+      color: #e2ecfb;
+      border: 1px solid #213651;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: linear-gradient(120deg, #5eea97, #49c67d);
+      color: #062110;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .preview {
+      display: grid;
+      place-items: center;
+      overflow: auto;
+    }
+
+    .board {
+      width: min(1024px, 100%);
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(180deg, #081126, #0a1326);
+      border: 1px solid #172842;
+      border-radius: 12px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    .board:fullscreen,
+    .board.is-fullscreen {
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      border-radius: 0;
+      border: 0;
+      padding: clamp(20px, 2.1vw, 36px);
+      gap: clamp(12px, 1vw, 20px);
+      box-shadow: none;
+      background: linear-gradient(180deg, #071022, #09152b);
+    }
+
+    .board-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #dce8fa;
+    }
+
+    .board:fullscreen .board-title,
+    .board.is-fullscreen .board-title {
+      font-size: clamp(1.5rem, 2vw, 2.2rem);
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr 1.7fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .kpi {
+      background: radial-gradient(circle at 50% 40%, rgba(77, 229, 140, 0.22), rgba(7, 18, 34, 0.95));
+      border: 2px solid rgba(108, 242, 167, 0.5);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .kpi-label { font-size: 1.7rem; font-weight: 700; color: #ecf5ff; }
+    .kpi-value { font-size: clamp(2.8rem, 6vw, 6rem); line-height: 1; font-weight: 800; color: var(--accent-2); }
+    .kpi-note { color: #d4e0f0; opacity: 0.95; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; }
+
+    .board:fullscreen .kpi,
+    .board.is-fullscreen .kpi {
+      padding: clamp(16px, 1.8vw, 30px);
+      border-radius: 16px;
+    }
+
+    .board:fullscreen .kpi-label,
+    .board.is-fullscreen .kpi-label {
+      font-size: clamp(1.8rem, 2.7vw, 3.1rem);
+    }
+
+    .board:fullscreen .kpi-value,
+    .board.is-fullscreen .kpi-value {
+      font-size: clamp(5rem, 9.5vw, 11rem);
+    }
+
+    .board:fullscreen .kpi-note,
+    .board.is-fullscreen .kpi-note {
+      font-size: clamp(1.1rem, 1.5vw, 1.8rem);
+    }
+
+    .chart {
+      background: #0c1629;
+      border: 1px solid #1a2e4d;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .chart svg { width: 100%; height: calc(100% - 16px); display: block; }
+
+    .board:fullscreen .chart,
+    .board.is-fullscreen .chart {
+      padding: clamp(12px, 1.1vw, 20px);
+      border-radius: 16px;
+    }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: #101b2d;
+      border: 1px solid #1e3452;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .stat .label { color: #9ab0c8; font-weight: 600; }
+    .stat .value { color: #ecf4ff; font-size: 2rem; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+
+    .board:fullscreen .stat,
+    .board.is-fullscreen .stat {
+      padding: clamp(10px, 1vw, 18px);
+      border-radius: 14px;
+    }
+
+    .board:fullscreen .stat .label,
+    .board.is-fullscreen .stat .label {
+      font-size: clamp(1rem, 1.35vw, 1.7rem);
+    }
+
+    .board:fullscreen .stat .value,
+    .board.is-fullscreen .stat .value {
+      font-size: clamp(2rem, 3.3vw, 4rem);
+    }
+
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 1fr; }
+      .controls { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="controls">
+      <h1>Dashboard Inputs</h1>
+      <p class="subtitle">Set core business inputs. The dashboard metrics are auto-generated.</p>
+
+      <div class="row">
+        <div class="group">
+          <label for="mrrValue">Current MRR ($)</label>
+          <input id="mrrValue" value="3000" />
+        </div>
+        <div class="group">
+          <label for="growthRate">Monthly growth (%)</label>
+          <input id="growthRate" value="18" />
+        </div>
+      </div>
+
+      <div class="group">
+        <label for="arpuValue">ARPU per subscriber ($)</label>
+        <input id="arpuValue" value="20" />
+      </div>
+
+      <button class="primary" id="fullscreenBtn">Open Fullscreen Dashboard</button>
+    </aside>
+
+    <main class="preview">
+      <section id="board" class="board">
+        <div class="board-title">SaaS analytics</div>
+        <div class="top">
+          <article class="kpi">
+            <div class="kpi-label" id="kpiLabelOut"></div>
+            <div class="kpi-value" id="kpiValueOut"></div>
+            <div class="kpi-note" id="kpiNoteOut"></div>
+          </article>
+          <article class="chart">
+            <svg id="chartSvg" viewBox="0 0 720 360"></svg>
+          </article>
+        </div>
+        <div class="bottom">
+          <article class="stat"><div class="label">Active Subscribers</div><div class="value" id="s1ValueOut"></div></article>
+          <article class="stat"><div class="label">Churn</div><div class="value" id="s2ValueOut"></div></article>
+          <article class="stat"><div class="label">Total Views</div><div class="value" id="s3ValueOut"></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const fields = [
+      "mrrValue", "growthRate", "arpuValue"
+    ];
+
+    const el = (id) => document.getElementById(id);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May"];
+
+    function parseMoneyInput(value, fallback) {
+      const raw = String(value || "").trim().toLowerCase().replace(/[, ]+/g, "");
+      if (!raw) return fallback;
+      const n = Number(raw.replace(/[^0-9.]/g, ""));
+      if (!Number.isFinite(n) || n <= 0) return fallback;
+      if (raw.includes("m")) return n * 1000000;
+      if (raw.includes("k")) return n * 1000;
+      return n;
+    }
+
+    function parsePercentInput(value, fallback) {
+      const n = Number(String(value || "").replace("%", "").trim());
+      if (!Number.isFinite(n)) return fallback;
+      return Math.min(80, Math.max(-20, n));
+    }
+
+    function formatMoneyCompact(value) {
+      if (value >= 1000000) return `$${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1)}M`;
+      if (value >= 1000) return `$${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
+      return `$${Math.round(value)}`;
+    }
+
+    function formatNumber(n) {
+      return Math.round(n).toLocaleString("en-US");
+    }
+
+    function linePath(points) {
+      return points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+    }
+
+    function areaPath(points, h) {
+      const start = points[0];
+      const end = points[points.length - 1];
+      return `${linePath(points)} L ${end.x} ${h} L ${start.x} ${h} Z`;
+    }
+
+    function drawChart(months, values) {
+      const svg = el("chartSvg");
+      const w = 720;
+      const h = 360;
+      svg.innerHTML = "";
+
+      const pad = { top: 64, right: 40, bottom: 45, left: 45 };
+      const innerW = w - pad.left - pad.right;
+      const innerH = h - pad.top - pad.bottom;
+      const max = Math.max(...values, 1);
+      const min = 0;
+      const stepsY = 5;
+
+      for (let i = 0; i <= stepsY; i++) {
+        const y = pad.top + (innerH / stepsY) * i;
+        const val = max - (max / stepsY) * i;
+        const grid = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        grid.setAttribute("x1", pad.left.toString());
+        grid.setAttribute("y1", y.toString());
+        grid.setAttribute("x2", (w - pad.right).toString());
+        grid.setAttribute("y2", y.toString());
+        grid.setAttribute("stroke", "#22354f");
+        grid.setAttribute("stroke-width", "1");
+        svg.appendChild(grid);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", "4");
+        label.setAttribute("y", (y + 4).toString());
+        label.setAttribute("fill", "#89a2bd");
+        label.setAttribute("font-size", "12");
+        label.textContent = `$${Math.round(val / 100) / 10}K`;
+        svg.appendChild(label);
+      }
+
+      const count = Math.max(values.length, 2);
+      const points = values.map((v, i) => {
+        const x = pad.left + (i * innerW) / (count - 1);
+        const scaled = (v - min) / (max - min || 1);
+        const y = pad.top + innerH - scaled * innerH;
+        return { x, y };
+      });
+
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      const gradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+      gradient.setAttribute("id", "fill");
+      gradient.setAttribute("x1", "0");
+      gradient.setAttribute("x2", "0");
+      gradient.setAttribute("y1", "0");
+      gradient.setAttribute("y2", "1");
+      const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+      stop1.setAttribute("offset", "0%");
+      stop1.setAttribute("stop-color", "#effbff");
+      stop1.setAttribute("stop-opacity", "0.65");
+      const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+      stop2.setAttribute("offset", "100%");
+      stop2.setAttribute("stop-color", "#effbff");
+      stop2.setAttribute("stop-opacity", "0.1");
+      gradient.appendChild(stop1);
+      gradient.appendChild(stop2);
+      defs.appendChild(gradient);
+      svg.appendChild(defs);
+
+      const area = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      area.setAttribute("d", areaPath(points, pad.top + innerH));
+      area.setAttribute("fill", "url(#fill)");
+      svg.appendChild(area);
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      line.setAttribute("d", linePath(points));
+      line.setAttribute("fill", "none");
+      line.setAttribute("stroke", "#ecf6ff");
+      line.setAttribute("stroke-width", "4");
+      line.setAttribute("stroke-linecap", "round");
+      line.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(line);
+
+      points.forEach((p, i) => {
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", p.x.toString());
+        c.setAttribute("cy", p.y.toString());
+        c.setAttribute("r", i === points.length - 1 ? "6" : "0");
+        c.setAttribute("fill", "#f0fbff");
+        svg.appendChild(c);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", (p.x - 10).toString());
+        label.setAttribute("y", (h - 10).toString());
+        label.setAttribute("fill", "#89a2bd");
+        label.setAttribute("font-size", "14");
+        label.textContent = months[i] || `M${i + 1}`;
+        svg.appendChild(label);
+      });
+
+      const topValue = values[values.length - 1] || 0;
+      const lastPoint = points[points.length - 1];
+      const guideTop = 54;
+
+      const guide = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      guide.setAttribute("x1", lastPoint.x.toString());
+      guide.setAttribute("y1", guideTop.toString());
+      guide.setAttribute("x2", lastPoint.x.toString());
+      guide.setAttribute("y2", lastPoint.y.toString());
+      guide.setAttribute("stroke", "#d8eafc");
+      guide.setAttribute("stroke-opacity", "0.45");
+      guide.setAttribute("stroke-width", "2");
+      svg.appendChild(guide);
+
+      const tipW = 64;
+      const tipH = 30;
+      const tipY = 18;
+      const minX = pad.left;
+      const maxX = w - pad.right - tipW;
+      const tipX = Math.max(minX, Math.min(maxX, lastPoint.x - tipW / 2));
+
+      const chip = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      chip.setAttribute("x", tipX.toString());
+      chip.setAttribute("y", tipY.toString());
+      chip.setAttribute("width", tipW.toString());
+      chip.setAttribute("height", tipH.toString());
+      chip.setAttribute("rx", "8");
+      chip.setAttribute("fill", "#7a8ea6");
+      chip.setAttribute("opacity", "0.45");
+      svg.appendChild(chip);
+
+      const chipText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      chipText.setAttribute("x", (tipX + 10).toString());
+      chipText.setAttribute("y", (tipY + 20).toString());
+      chipText.setAttribute("fill", "#f1f8ff");
+      chipText.setAttribute("font-size", "14");
+      chipText.setAttribute("font-weight", "700");
+      chipText.textContent = `$${Math.round(topValue / 100) / 10}K`;
+      svg.appendChild(chipText);
+    }
+
+    function generateMetrics() {
+      const mrr = parseMoneyInput(el("mrrValue").value, 3000);
+      const growthPct = parsePercentInput(el("growthRate").value, 18);
+      const arpu = Math.max(5, parseMoneyInput(el("arpuValue").value, 20));
+      const growth = 1 + growthPct / 100;
+
+      const values = [];
+      for (let i = months.length - 1; i >= 0; i--) {
+        const monthValue = mrr / Math.pow(growth, i);
+        values.push(Math.max(0, monthValue));
+      }
+
+      const activeSubscribers = Math.max(1, Math.round(mrr / arpu));
+      const churn = Math.max(0.4, Math.min(9.5, 4.6 - growthPct * 0.14 + (arpu < 15 ? 0.6 : 0)));
+      const totalViews = Math.round(activeSubscribers * 8.2 + mrr * 0.11);
+
+      return { mrr, values, activeSubscribers, churn, totalViews };
+    }
+
+    function render() {
+      const model = generateMetrics();
+      el("kpiLabelOut").textContent = "KPI";
+      el("kpiValueOut").textContent = formatMoneyCompact(model.mrr);
+      el("kpiNoteOut").textContent = "MONTHLY RECURRING REVENUE MRR";
+      el("s1ValueOut").textContent = formatNumber(model.activeSubscribers);
+      el("s2ValueOut").textContent = `${model.churn.toFixed(1)}%`;
+      el("s3ValueOut").textContent = formatNumber(model.totalViews);
+      drawChart(months, model.values);
+    }
+
+    fields.forEach((id) => el(id).addEventListener("input", render));
+
+    function setFullscreenState(active) {
+      const board = el("board");
+      const btn = el("fullscreenBtn");
+      board.classList.toggle("is-fullscreen", active);
+      btn.textContent = active ? "Exit Fullscreen Dashboard" : "Open Fullscreen Dashboard";
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      setFullscreenState(document.fullscreenElement === el("board"));
+    });
+
+    el("fullscreenBtn").addEventListener("click", async () => {
+      const board = el("board");
+      if (document.fullscreenElement === board) {
+        await document.exitFullscreen();
+      } else {
+        await board.requestFullscreen();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
